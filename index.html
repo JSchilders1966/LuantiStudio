@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LuantiStudio — Mod Editor</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e1e2e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LuantiStudio">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Blockly -->
+  <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
+  <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
+  <script src="https://unpkg.com/blockly/msg/en.js"></script>
+  <!-- JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- CodeMirror (Lua-editor met syntax highlighting) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/lua/lua.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+
+  <!-- i18n / UI-helpers moeten vóór de blokdefinities laden -->
+  <script src="js/i18n.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/storage.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span class="logo">🧱 LuantiStudio</span>
+  </div>
+  <div class="header-center">
+    <label><span data-i18n="header.modName">Mod naam:</span> <input type="text" id="mod-name" value="mymod" pattern="[a-z0-9_]+" placeholder="mymod"></label>
+    <label><span data-i18n="header.desc">Beschrijving:</span> <input type="text" id="mod-desc" value="My first mod" placeholder="My first mod"></label>
+    <label><span data-i18n="header.author">Auteur:</span> <input type="text" id="mod-author" value="" placeholder="jouwnaam" data-i18n-placeholder="header.authorPlaceholder"></label>
+  </div>
+  <div class="header-right">
+    <select id="lang-select" class="btn-secondary" data-i18n-title="header.langLabel" title="Taal">
+      <option value="nl">🇳🇱 Nederlands</option>
+      <option value="en">🇬🇧 English</option>
+    </select>
+    <div class="dropdown">
+      <button class="btn-secondary" id="btn-project"><span data-i18n="header.projectBtn">💾 Project</span> ▾</button>
+      <ul class="dropdown-menu" id="project-menu">
+        <li data-action="save" data-i18n="project.save">Opslaan als…</li>
+        <li data-action="open" data-i18n="project.open">Openen…</li>
+      </ul>
+    </div>
+    <div class="dropdown">
+      <button class="btn-secondary" id="btn-examples"><span data-i18n="header.examplesBtn">📂 Voorbeelden</span> ▾</button>
+      <ul class="dropdown-menu" id="examples-menu">
+        <li data-example="boom" data-i18n="examples.boom">🌳 Groeiende boom</li>
+        <li data-example="geluid" data-i18n="examples.geluid">🔊 Geluidsnode</li>
+        <li data-example="kleur" data-i18n="examples.kleur">🎨 Kleurwisselende node</li>
+        <li data-example="confetti" data-i18n="examples.confetti">🎉 Confetti node</li>
+      </ul>
+    </div>
+    <button id="btn-download" class="btn-primary" data-i18n="header.download">⬇ Download mod (.zip)</button>
+  </div>
+</header>
+
+<div class="main-layout">
+  <!-- Blockly workspace -->
+  <div id="blockly-area">
+    <div id="blockly-div"></div>
+  </div>
+
+  <!-- Right panel -->
+  <aside id="side-panel">
+    <div class="panel-tabs">
+      <button class="tab-btn active" data-tab="textures" data-i18n="tabs.textures">Textures</button>
+      <button class="tab-btn" data-tab="sounds" data-i18n="tabs.sounds">Sounds</button>
+      <button class="tab-btn" data-tab="code" data-i18n="tabs.lua">Lua code</button>
+    </div>
+
+    <!-- Textures tab -->
+    <div id="tab-textures" class="tab-content active">
+      <div id="texture-drop-zone">
+        <input type="file" id="texture-input" accept="image/*" multiple hidden>
+        <p data-i18n-html="textures.dropHtml">Sleep .png/.jpg bestanden hierheen<br>of</p>
+        <button class="btn-secondary" id="btn-choose-textures" data-i18n="textures.chooseFiles">Kies bestanden</button>
+      </div>
+      <div id="texture-list"></div>
+    </div>
+
+    <!-- Sounds tab -->
+    <div id="tab-sounds" class="tab-content">
+      <div id="sound-drop-zone">
+        <input type="file" id="sound-input" accept="audio/ogg,.ogg" multiple hidden>
+        <p data-i18n-html="sounds.dropHtml">Sleep .ogg bestanden hierheen<br>of</p>
+        <button class="btn-secondary" id="btn-choose-sounds" data-i18n="textures.chooseFiles">Kies bestanden</button>
+      </div>
+      <div id="sound-list"></div>
+    </div>
+
+    <!-- Code tab -->
+    <div id="tab-code" class="tab-content">
+      <div class="code-toolbar">
+        <button class="btn-icon" id="btn-copy-code" data-i18n="lua.copy">📋 Kopieer</button>
+      </div>
+      <pre id="lua-preview"><code id="lua-code" data-i18n="lua.placeholder">-- Voeg blokken toe in de workspace om Lua-code te genereren.</code></pre>
+    </div>
+  </aside>
+</div>
+
+<script src="js/blocks.js"></script>
+<script src="js/generator.js"></script>
+<script src="js/examples.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
