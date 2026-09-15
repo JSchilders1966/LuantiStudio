@@ -1,67 +1,67 @@
 # 🧱 LuantiStudio
 
-Een visuele Blockly-editor waarmee je zonder Lua te typen een werkende [Luanti](https://www.luanti.org/)/Minetest-mod in elkaar klikt. Sleep blokken voor nodes, items, tools, crafting-recepten en node-gedrag (geluid, timers, node vervangen) in elkaar, upload je eigen textures en geluiden, en download direct een installeerbare mod-map als `.zip`.
+A visual Blockly editor for putting together a working [Luanti](https://www.luanti.org/)/Minetest mod without typing Lua. Drag blocks for nodes, items, tools, crafting recipes, and node behavior (sound, timers, replacing nodes) together, upload your own textures and sounds, and download an installable mod folder as a `.zip`.
 
-Gebouwd voor onderwijsgebruik (De Twijn / TechDeck) — de gegenereerde Lua-code blijft altijd zichtbaar en leesbaar, zodat leerlingen de link tussen blokken en code leggen.
+Built for classroom use (De Twijn / TechDeck) — the generated Lua code always stays visible and readable, so students can connect the blocks to the code.
 
-## Functies
+## Features
 
-- **Node-editor** — naam, beschrijving, licht, diggable/climbable, drawtype, dig-groepen, drop-item
-- **Textures** — upload `.png`/`.jpg` bestanden, óf kies een effen kleur (geen plaatje nodig); één standaard-texture rondom met optionele per-zijde uitzonderingen
-- **Geluiden** — upload `.ogg` bestanden met voorbeeld-afspeelknop
-- **Gebeurtenissen** — "Wanneer deze node wordt geraakt / ingedrukt / afgebroken" of "wanneer een speler binnen X blokken komt" (draait op een ABM), met acties: geluid afspelen, node vervangen, wachten (met geneste vervolgacties) — ideaal voor knoppen, deuren, vallen en verrassingseffecten
-- **Items, tools & crafting** — craftitems, tools met tool-capabilities, shaped/shapeless recepten, furnace fuel
-- **Eigen Lua-code blok** — met syntax highlighting (CodeMirror) voor wie verder wil dan de blokken
-- **Voorbeelden** — kant-en-klare mods om te laden en te verkennen (groeiende boom, geluidsnode, kleurwisselende node, confetti)
-- **Twee talen** — Nederlands / English, direct omschakelbaar; live vertaling van blokken op de workspace
-- **Projecten opslaan/openen** — bewaar je werk onder een zelfgekozen naam (IndexedDB, blijft in de browser)
-- **PWA** — installeerbaar als app, werkt offline dankzij een service worker
-- **Direct downloaden** — genereert een complete modmap (`mod.conf`, `init.lua`, `textures/`, `sounds/`) als `.zip`
+- **Node editor** — name, description, light, diggable/climbable, drawtype, dig groups, drop item
+- **Textures** — upload `.png`/`.jpg` files, or pick a solid color (no image needed); one default texture for all sides with optional per-side overrides
+- **Sounds** — upload `.ogg` files with a preview play button
+- **Events** — "When this node is hit / pressed / dug" or "when a player comes within X blocks" (runs on an ABM), with actions: play sound, replace node, wait (with nested follow-up actions) — great for buttons, doors, traps, and surprise effects
+- **Items, tools & crafting** — craftitems, tools with tool capabilities, shaped/shapeless recipes, furnace fuel
+- **Custom Lua code block** — with syntax highlighting (CodeMirror) for anyone who wants to go beyond the blocks
+- **Examples** — ready-made mods to load and explore (growing tree, sound node, color-changing node, confetti)
+- **Two languages** — Dutch / English, switchable instantly; blocks on the workspace re-translate live
+- **Save/open projects** — save your work under a name you choose (IndexedDB, stays in the browser)
+- **PWA** — installable as an app, works offline thanks to a service worker
+- **One-click download** — generates a complete mod folder (`mod.conf`, `init.lua`, `textures/`, `sounds/`) as a `.zip`
 
-## Starten
+## Getting started
 
-Geen build-stap nodig — puur statische bestanden.
+No build step — plain static files.
 
 ```bash
-./start.sh          # start op http://localhost:8080
-./start.sh 8099      # of op een andere poort
+./start.sh          # starts on http://localhost:8080
+./start.sh 8099      # or a different port
 ```
 
-Of open `index.html` via een willekeurige lokale webserver (nodig voor de service worker en module-achtige script-laadvolgorde; direct openen als `file://` werkt niet volledig betrouwbaar).
+Or open `index.html` through any local web server (needed for the service worker and the script load order; opening it directly as `file://` doesn't fully work).
 
-## Gebruik
+## Usage
 
-1. Sleep blokken uit de categorieën links (**Nodes**, **Items & Tools**, **Crafting**, **Eigen code**, **Waarden**) de werkruimte in en klik ze aan elkaar.
-2. Upload textures en geluiden via de tabs rechtsboven in het zijpaneel.
-3. Bekijk de gegenereerde Lua-code live in de tab **Lua code**.
-4. Klik **⬇ Download mod (.zip)** en pak de map uit in de `mods/`-map van je Luanti/Minetest-installatie.
+1. Drag blocks from the categories on the left (**Nodes**, **Items & Tools**, **Crafting**, **Custom code**, **Values**) into the workspace and click them together.
+2. Upload textures and sounds via the tabs in the top-right side panel.
+3. Watch the generated Lua code live in the **Lua code** tab.
+4. Click **⬇ Download mod (.zip)** and unpack the folder into your Luanti/Minetest installation's `mods/` directory.
 
-## Projectstructuur
+## Project structure
 
 ```
-index.html          Layout, Blockly-toolbox-plek, CDN-includes
-style.css            Styling (donker thema)
-manifest.json / sw.js   PWA-manifest en service worker
+index.html          Layout, Blockly toolbox mount point, CDN includes
+style.css            Styling (dark theme)
+manifest.json / sw.js   PWA manifest and service worker
 js/
-  i18n.js            Vertaalwoordenboek (NL/EN) + taal-helpers
-  ui.js              Gedeelde modals (bevestigen, invoer, toast) — geen native browser-dialogs
-  storage.js         IndexedDB-wrapper voor opgeslagen projecten
-  blocks.js           Blockly-blokdefinities + eigen velden (kleurenkiezer, Lua-code-editor)
-  generator.js         Blok → Lua-codegenerator
-  examples.js          Kant-en-klare voorbeeldmods
-  app.js               Wiring: workspace, tabs, uploads, project­menu, zip-download
-icons/                PWA-iconen
+  i18n.js            Translation dictionary (NL/EN) + language helpers
+  ui.js              Shared modals (confirm, prompt, toast) — no native browser dialogs
+  storage.js         IndexedDB wrapper for saved projects
+  blocks.js           Blockly block definitions + custom fields (color picker, Lua code editor)
+  generator.js         Block → Lua code generator
+  examples.js          Ready-made example mods
+  app.js               Wiring: workspace, tabs, uploads, project menu, zip download
+icons/                PWA icons
 ```
 
-## Techniek
+## Tech
 
-Geen build-tooling — alle libraries laden via CDN:
+No build tooling — every library loads via CDN:
 
-- [Blockly](https://developers.google.com/blockly) — blokkeneditor
-- [CodeMirror 5](https://codemirror.net/5/) — Lua-syntax-highlighting in het eigen-code-blok
-- [JSZip](https://stuk.github.io/jszip/) — zip-bestand samenstellen voor download
+- [Blockly](https://developers.google.com/blockly) — block editor
+- [CodeMirror 5](https://codemirror.net/5/) — Lua syntax highlighting in the custom-code block
+- [JSZip](https://stuk.github.io/jszip/) — assembles the downloadable zip file
 
-## Bekende beperkingen
+## Known limitations
 
-- Geluiden moeten `.ogg` zijn (Luanti ondersteunt geen andere audioformaten)
-- Effen kleuren als texture gebruiken Luanti's `[fill`-texture-modifier — geen sluithaakje `]` toevoegen, die syntax kent geen afsluiting
+- Sounds must be `.ogg` (Luanti doesn't support other audio formats)
+- Solid-color textures use Luanti's `[fill` texture modifier — don't add a closing `]`, that syntax has no terminator
