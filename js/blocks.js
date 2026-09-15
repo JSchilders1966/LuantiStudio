@@ -327,7 +327,7 @@ Blockly.Blocks['luanti_on_event'] = {
 // ── luanti_on_near ─────────────────────────────
 // Koppel aan "Gebeurtenissen" op Registreer node, net als luanti_on_event.
 // Minetest heeft geen directe "speler in de buurt"-callback op een node
-// — dit genereert daarom een aparte minetest.register_abm() die elke
+// — dit genereert daarom een aparte core.register_abm() die elke
 // seconde controleert of een speler binnen de opgegeven straal is.
 Blockly.Blocks['luanti_on_near'] = {
   init() {

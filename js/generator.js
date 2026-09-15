@@ -72,23 +72,31 @@ function genActionLines(startBlock) {
       const sound = b.getFieldValue('SOUND');
       const gain  = b.getFieldValue('GAIN');
       if (sound && sound !== '__NONE__') {
-        lines.push(`minetest.sound_play(${luaStr(sound)}, {pos = pos, gain = ${gain}, max_hear_distance = 16})`);
+        lines.push(`core.sound_play(${luaStr(sound)}, {pos = pos, gain = ${gain}, max_hear_distance = 16})`);
       }
     } else if (b.type === 'luanti_action_set_node') {
       const nodeName = b.getFieldValue('NODENAME');
       if (nodeName) {
-        lines.push(`minetest.set_node(pos, {name = ${luaStr(nodeName)}})`);
+        lines.push(`core.set_node(pos, {name = ${luaStr(nodeName)}})`);
       }
     } else if (b.type === 'luanti_action_wait') {
       const seconds = b.getFieldValue('SECONDS');
       const innerLines = genActionLines(b.getInputTargetBlock('ACTIONS'));
       // "pos" opnieuw als parameternaam gebruiken zodat geneste acties
       // (die allemaal naar "pos" verwijzen) ongewijzigd blijven werken —
-      // minetest.after() geeft zelf geen pos door, dus die moet expliciet
+      // core.after() geeft zelf geen pos door, dus die moet expliciet
       // als extra argument meegegeven worden.
-      lines.push(`minetest.after(${seconds}, function(pos)`);
+      lines.push(`core.after(${seconds}, function(pos)`);
       innerLines.forEach(l => lines.push(`    ${l}`));
       lines.push(`end, pos)`);
+    } else if (b.type === 'luanti_raw_lua') {
+      // Eigen Lua-code mag ook als actie gebruikt worden — de code komt
+      // regel voor regel in de callback terecht, "pos" is beschikbaar
+      // net als bij de andere acties.
+      const code = b.getFieldValue('CODE');
+      if (code && code.trim()) {
+        code.split('\n').forEach(l => lines.push(l));
+      }
     }
     b = b.nextConnection && b.nextConnection.targetBlock();
   }
@@ -198,9 +206,10 @@ luaGenerator.forBlock['luanti_register_node'] = function(block) {
   };
   const eventActionLines = { HIT: [], RIGHTCLICK: [], DIG: [] };
   // "Speler in de buurt"-triggers hebben geen node-definitie-callback in
-  // Minetest — die worden apart als minetest.register_abm() gegenereerd,
+  // Minetest — die worden apart als core.register_abm() gegenereerd,
   // ná de node-registratie (zie onderaan).
   const nearBlocks = [];
+  const extraTopLevel = [];
 
   let eventBlock = block.getInputTargetBlock('EVENTS');
   while (eventBlock) {
@@ -213,12 +222,18 @@ luaGenerator.forBlock['luanti_register_node'] = function(block) {
       }
     } else if (eventBlock.type === 'luanti_on_near') {
       nearBlocks.push(eventBlock);
+    } else if (eventBlock.type === 'luanti_raw_lua') {
+      // Een Eigen-code-blok direct in "Gebeurtenissen" (i.p.v. in een
+      // "doe:"-slot) hoort niet bij een specifieke trigger — de code
+      // komt gewoon los ná de node-registratie te staan.
+      const code = eventBlock.getFieldValue('CODE');
+      if (code && code.trim()) extraTopLevel.push(code.trim());
     }
     eventBlock = eventBlock.nextConnection && eventBlock.nextConnection.targetBlock();
   }
 
   const lines = [];
-  lines.push(`minetest.register_node(${luaStr(name)}, {`);
+  lines.push(`core.register_node(${luaStr(name)}, {`);
   lines.push(`    description = ${luaStr(desc)},`);
   if (drawtype !== 'normal') lines.push(`    drawtype = ${luaStr(drawtype)},`);
   if (tilesCode)    lines.push(`    tiles = {${tilesCode}},`);
@@ -247,13 +262,13 @@ luaGenerator.forBlock['luanti_register_node'] = function(block) {
     const actionLines = genActionLines(nb.getInputTargetBlock('ACTIONS'));
     if (!actionLines.length) return;
     const abm = [];
-    abm.push(`minetest.register_abm({`);
+    abm.push(`core.register_abm({`);
     abm.push(`    label = ${luaStr('Speler nabij: ' + name)},`);
     abm.push(`    nodenames = {${luaStr(name)}},`);
     abm.push(`    interval = 1,`);
     abm.push(`    chance = 1,`);
     abm.push(`    action = function(pos, node)`);
-    abm.push(`        for _, player in ipairs(minetest.get_connected_players()) do`);
+    abm.push(`        for _, player in ipairs(core.get_connected_players()) do`);
     abm.push(`            if vector.distance(pos, player:get_pos()) <= ${radius} then`);
     actionLines.forEach(l => abm.push(`                ${l}`));
     abm.push(`            end`);
@@ -263,7 +278,7 @@ luaGenerator.forBlock['luanti_register_node'] = function(block) {
     abmBlocks.push(abm.join('\n'));
   });
 
-  return [lines.join('\n')].concat(abmBlocks).join('\n\n') + '\n';
+  return [lines.join('\n')].concat(abmBlocks, extraTopLevel).join('\n\n') + '\n';
 };
 
 // ── register_craftitem ────────────────────────
@@ -274,7 +289,7 @@ luaGenerator.forBlock['luanti_register_craftitem'] = function(block) {
   const image = luaGenerator.valueToCode(block, 'IMAGE', luaGenerator.ORDER_NONE);
 
   const lines = [];
-  lines.push(`minetest.register_craftitem(${luaStr(name)}, {`);
+  lines.push(`core.register_craftitem(${luaStr(name)}, {`);
   lines.push(`    description = ${luaStr(desc)},`);
   if (image)       lines.push(`    inventory_image = ${image},`);
   if (+stack !== 99) lines.push(`    stack_max = ${stack},`);
@@ -316,7 +331,7 @@ luaGenerator.forBlock['luanti_register_tool'] = function(block) {
   const caps  = luaGenerator.valueToCode(block, 'CAPS',  luaGenerator.ORDER_NONE);
 
   const lines = [];
-  lines.push(`minetest.register_tool(${luaStr(name)}, {`);
+  lines.push(`core.register_tool(${luaStr(name)}, {`);
   lines.push(`    description = ${luaStr(desc)},`);
   if (image) lines.push(`    inventory_image = ${image},`);
   if (caps)  lines.push(`    tool_capabilities = ${caps},`);
@@ -343,7 +358,7 @@ luaGenerator.forBlock['luanti_craft_shaped'] = function(block) {
   const outputVal = +count > 1 ? `${luaStr(output)} ${count}` : output;
 
   return [
-    `minetest.register_craft({`,
+    `core.register_craft({`,
     `    output = ${luaStr(outputVal)},`,
     `    recipe = {`,
     luaRows.join(',\n'),
@@ -367,7 +382,7 @@ luaGenerator.forBlock['luanti_craft_shapeless'] = function(block) {
   const outputVal = +count > 1 ? `${output} ${count}` : output;
 
   return [
-    `minetest.register_craft({`,
+    `core.register_craft({`,
     `    type = "shapeless",`,
     `    output = ${luaStr(outputVal)},`,
     `    recipe = {`,
@@ -383,7 +398,7 @@ luaGenerator.forBlock['luanti_craft_fuel'] = function(block) {
   const item     = block.getFieldValue('ITEM');
   const burntime = block.getFieldValue('BURNTIME');
   return [
-    `minetest.register_craft({`,
+    `core.register_craft({`,
     `    type = "fuel",`,
     `    recipe = ${luaStr(item)},`,
     `    burntime = ${burntime},`,

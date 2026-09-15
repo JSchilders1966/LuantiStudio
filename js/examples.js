@@ -45,14 +45,14 @@ function loadVoorbeeldBoom(ws) {
   }, 40, 340);
 
   placeLua(ws, `-- ABM: laat de zaailing groeien tot een boom
-minetest.register_abm({
+core.register_abm({
     label = "Boom groei",
     nodenames = {"${m}:sapling"},
     interval = 10,   -- controleer elke 10 seconden
     chance = 4,      -- 1 op 4 kans per check
     action = function(pos, node)
         -- Controleer of er genoeg licht is
-        if minetest.get_node_light(pos) and minetest.get_node_light(pos) < 10 then
+        if core.get_node_light(pos) and core.get_node_light(pos) < 10 then
             return
         end
 
@@ -61,8 +61,8 @@ minetest.register_abm({
         -- Bouw de stam omhoog
         for i = 0, height do
             local p = {x = pos.x, y = pos.y + i, z = pos.z}
-            if minetest.get_node(p).name == "air" or i == 0 then
-                minetest.set_node(p, {name = "${m}:tree"})
+            if core.get_node(p).name == "air" or i == 0 then
+                core.set_node(p, {name = "${m}:tree"})
             end
         end
 
@@ -73,8 +73,8 @@ minetest.register_abm({
                     -- Maak ronde kroon door hoeken weg te laten
                     if math.abs(dx) + math.abs(dz) < 4 then
                         local lpos = {x = pos.x + dx, y = pos.y + dy, z = pos.z + dz}
-                        if minetest.get_node(lpos).name == "air" then
-                            minetest.set_node(lpos, {name = "default:leaves"})
+                        if core.get_node(lpos).name == "air" then
+                            core.set_node(lpos, {name = "default:leaves"})
                         end
                     end
                 end
@@ -99,11 +99,11 @@ function loadVoorbeeldGeluid(ws) {
 
   placeLua(ws, `-- Geluid bij aanslaan (on_punch)
 -- Overschrijf de node definitie met callbacks
-local old_def = minetest.registered_nodes["${m}:soundnode"]
+local old_def = core.registered_nodes["${m}:soundnode"]
 if old_def then
-    minetest.override_item("${m}:soundnode", {
+    core.override_item("${m}:soundnode", {
         on_punch = function(pos, node, puncher, pointed_thing)
-            minetest.sound_play("default_dig_cracky", {
+            core.sound_play("default_dig_cracky", {
                 pos = pos,
                 gain = 1.0,
                 max_hear_distance = 16,
@@ -113,19 +113,19 @@ if old_def then
 end
 
 -- ABM: geluid wanneer speler op de node staat (footstep effect)
-minetest.register_abm({
+core.register_abm({
     label = "Footstep geluid",
     nodenames = {"${m}:soundnode"},
     interval = 0.5,
     chance = 1,
     action = function(pos, node)
-        for _, player in ipairs(minetest.get_connected_players()) do
+        for _, player in ipairs(core.get_connected_players()) do
             local ppos = player:get_pos()
             -- Controleer of speler direct boven de node staat
             if math.abs(ppos.x - pos.x) < 0.6 and
                math.abs(ppos.y - (pos.y + 1)) < 0.8 and
                math.abs(ppos.z - pos.z) < 0.6 then
-                minetest.sound_play("default_footstep", {
+                core.sound_play("default_footstep", {
                     pos = pos,
                     gain = 0.4,
                     max_hear_distance = 6,
@@ -162,7 +162,7 @@ local kleur_volgorde = {
     "${m}:node_blauw",
 }
 
-minetest.register_abm({
+core.register_abm({
     label = "Kleur wissel",
     nodenames = kleur_volgorde,
     interval = 3,
@@ -172,10 +172,10 @@ minetest.register_abm({
             if node.name == naam then
                 -- Ga naar de volgende kleur (of terug naar rood)
                 local volgende = kleur_volgorde[(i % #kleur_volgorde) + 1]
-                minetest.set_node(pos, {name = volgende})
+                core.set_node(pos, {name = volgende})
 
                 -- Kleine visuele flash: licht even aan
-                minetest.add_particlespawner({
+                core.add_particlespawner({
                     amount = 4,
                     time = 0.3,
                     minpos = {x=pos.x-0.4, y=pos.y+0.5, z=pos.z-0.4},
@@ -226,7 +226,7 @@ local confetti_textures = {
 }
 
 -- ABM: spuit confetti als speler binnen 5 blokken komt
-minetest.register_abm({
+core.register_abm({
     label = "Confetti effect",
     nodenames = {"${m}:confettinode"},
     interval = 0.4,
@@ -234,7 +234,7 @@ minetest.register_abm({
     action = function(pos, node)
         local spelers_dichtbij = false
 
-        for _, player in ipairs(minetest.get_connected_players()) do
+        for _, player in ipairs(core.get_connected_players()) do
             local ppos = player:get_pos()
             local afstand = vector.distance(pos, ppos)
 
@@ -244,7 +244,7 @@ minetest.register_abm({
                 -- Kies willekeurige confetti-textuur
                 local tex = confetti_textures[math.random(#confetti_textures)]
 
-                minetest.add_particlespawner({
+                core.add_particlespawner({
                     amount = 12,
                     time = 0.4,
                     -- Schiet confetti omhoog vanuit de node
@@ -276,15 +276,15 @@ minetest.register_abm({
 })
 
 -- Bonus: geluid bij confetti als speler echt dichtbij (< 2 blokken)
-minetest.register_abm({
+core.register_abm({
     label = "Confetti geluid",
     nodenames = {"${m}:confettinode"},
     interval = 1.5,
     chance = 1,
     action = function(pos, node)
-        for _, player in ipairs(minetest.get_connected_players()) do
+        for _, player in ipairs(core.get_connected_players()) do
             if vector.distance(pos, player:get_pos()) < 2 then
-                minetest.sound_play("default_place_node_hard", {
+                core.sound_play("default_place_node_hard", {
                     pos = pos,
                     gain = 0.3,
                     max_hear_distance = 6,

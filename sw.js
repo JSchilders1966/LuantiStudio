@@ -2,7 +2,7 @@
 // LuantiStudio — service worker (PWA offline app-shell)
 // ─────────────────────────────────────────────
 
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v10';
 const CACHE_NAME = `luantistudio-${CACHE_VERSION}`;
 
 const APP_SHELL = [
