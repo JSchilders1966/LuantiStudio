@@ -17,6 +17,7 @@ Built for classroom use (De Twijn / TechDeck) — the generated Lua code always 
 - **Save/open projects** — save your work under a name you choose (IndexedDB, stays in the browser)
 - **PWA** — installable as an app, works offline thanks to a service worker
 - **One-click download** — generates a complete mod folder (`mod.conf`, `init.lua`, `textures/`, `sounds/`) as a `.zip`
+- **Test in Luanti** (Chrome/Edge) — pick your local `mods/` folder once, then write the mod straight into it with one click — no more download/unzip/overwrite by hand. Falls back to the zip download in browsers without the File System Access API (Firefox/Safari)
 
 ## Getting started
 
@@ -34,7 +35,8 @@ Or open `index.html` through any local web server (needed for the service worker
 1. Drag blocks from the categories on the left (**Nodes**, **Items & Tools**, **Crafting**, **Custom code**, **Values**) into the workspace and click them together.
 2. Upload textures and sounds via the tabs in the top-right side panel.
 3. Watch the generated Lua code live in the **Lua code** tab.
-4. Click **⬇ Download mod (.zip)** and unpack the folder into your Luanti/Minetest installation's `mods/` directory.
+4. Either click **🎮 Test in Luanti** (Chrome/Edge — pick your `mods/` folder once, then it just writes there every time) or **⬇ Download mod (.zip)** and unpack the folder into your Luanti/Minetest installation's `mods/` directory yourself.
+5. Restart Luanti (or reload the world) to see your changes.
 
 ## Project structure
 

@@ -271,22 +271,21 @@ select.btn-secondary option {
 
 /* ── Code panel ── */
 .code-toolbar {
+  display: flex;
+  gap: 8px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
-#lua-preview {
+#lua-cm-host {
   flex: 1;
-  overflow: auto;
-  margin: 0;
-  padding: 12px;
+  min-height: 0;
   background: #161622;
-  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+}
+#lua-cm-host .CodeMirror {
   font-size: .78rem;
   line-height: 1.6;
-  color: #a6e3a1;
-  white-space: pre;
 }
 
 /* ── CodeMirror — Lua code editor (luanti_raw_lua modal) ── */

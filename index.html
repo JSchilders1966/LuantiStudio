@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -66,6 +66,13 @@
         <li data-example="confetti" data-i18n="examples.confetti">🎉 Confetti node</li>
       </ul>
     </div>
+    <div class="dropdown" id="test-dropdown" hidden>
+      <button class="btn-secondary" id="btn-test"><span data-i18n="header.testBtn">🎮 Test in Luanti</span> ▾</button>
+      <ul class="dropdown-menu" id="test-menu">
+        <li data-action="run" data-i18n="test.menuRun">Testen (schrijf naar mods-map)</li>
+        <li data-action="choose-folder" data-i18n="test.menuChooseFolder">Andere mods-map kiezen…</li>
+      </ul>
+    </div>
     <button id="btn-download" class="btn-primary" data-i18n="header.download">⬇ Download mod (.zip)</button>
   </div>
 </header>
@@ -108,8 +115,9 @@
     <div id="tab-code" class="tab-content">
       <div class="code-toolbar">
         <button class="btn-icon" id="btn-copy-code" data-i18n="lua.copy">📋 Kopieer</button>
+        <button class="btn-icon" id="btn-expand-code" data-i18n="lua.expand">⛶ Vergroot</button>
       </div>
-      <pre id="lua-preview"><code id="lua-code" data-i18n="lua.placeholder">-- Voeg blokken toe in de workspace om Lua-code te genereren.</code></pre>
+      <div id="lua-cm-host"></div>
     </div>
   </aside>
 </div>

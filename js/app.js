@@ -137,10 +137,20 @@ function resizeBlockly() {
 window.addEventListener('resize', resizeBlockly);
 resizeBlockly();
 
-// ── Code preview ─────────────────────────────
+// ── Code preview (CodeMirror: syntax highlighting + regelnummers) ──
+const luaCM = CodeMirror(document.getElementById('lua-cm-host'), {
+  mode: 'lua',
+  theme: 'luanti',
+  lineNumbers: true,
+  readOnly: true,
+  matchBrackets: true,
+  value: t('lua.placeholder'),
+});
+
 function updateCodePreview() {
   const code = generateLuaCode(workspace);
-  document.getElementById('lua-code').textContent = code || t('lua.empty');
+  const text = code || t('lua.empty');
+  if (luaCM.getValue() !== text) luaCM.setValue(text);
 }
 
 workspace.addChangeListener(updateCodePreview);
@@ -173,19 +183,102 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-content').forEach(c =>
       c.classList.toggle('active', c.id === `tab-${tab}`)
     );
-    if (tab === 'code') updateCodePreview();
+    if (tab === 'code') {
+      updateCodePreview();
+      // CodeMirror meet zijn afmetingen niet goed terwijl de tab
+      // verborgen was (display:none) — na zichtbaar worden opnieuw meten.
+      luaCM.refresh();
+    }
   });
 });
 
 // ── Copy code ────────────────────────────────
 document.getElementById('btn-copy-code').addEventListener('click', () => {
-  const code = document.getElementById('lua-code').textContent;
-  navigator.clipboard.writeText(code).then(() => {
+  navigator.clipboard.writeText(luaCM.getValue()).then(() => {
     const btn = document.getElementById('btn-copy-code');
+    const original = t('lua.copy');
     btn.textContent = t('lua.copied');
-    setTimeout(() => { btn.textContent = t('lua.copy'); }, 1500);
+    setTimeout(() => { btn.textContent = original; }, 1500);
   });
 });
+
+// ── Lua-code vergroten ────────────────────────
+// Opent de gegenereerde code in een groot, alleen-lezen CodeMirror-venster
+// (zelfde stijl als de andere modals) — handig omdat het zijpaneel maar
+// 320px breed is.
+document.getElementById('btn-expand-code').addEventListener('click', () => {
+  showExpandedCodeModal();
+});
+
+function showExpandedCodeModal() {
+  const overlay = document.createElement('div');
+  overlay.style.cssText =
+    'position:fixed;inset:0;background:rgba(0,0,0,.75);' +
+    'display:flex;align-items:center;justify-content:center;z-index:9999;';
+
+  const box = document.createElement('div');
+  box.style.cssText =
+    'background:#1e1e2e;border:1px solid #3a3a54;border-radius:12px;' +
+    'padding:16px;width:min(1100px, 94vw);height:min(760px, 90vh);' +
+    'display:flex;flex-direction:column;gap:12px;';
+
+  const toolbar = document.createElement('div');
+  toolbar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;flex-shrink:0;';
+
+  const title = document.createElement('div');
+  title.textContent = t('tabs.lua');
+  title.style.cssText = 'color:#cdd6f4;font-weight:600;font-size:.95rem;';
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+
+  const btnCopy = document.createElement('button');
+  btnCopy.className = 'btn-icon';
+  btnCopy.textContent = t('lua.copy');
+
+  const btnClose = document.createElement('button');
+  btnClose.className = 'btn-secondary';
+  btnClose.textContent = t('common.close');
+
+  btnRow.append(btnCopy, btnClose);
+  toolbar.append(title, btnRow);
+
+  const cmHost = document.createElement('div');
+  cmHost.style.cssText =
+    'flex:1;min-height:0;border:1px solid #3a3a54;border-radius:8px;overflow:hidden;';
+
+  box.append(toolbar, cmHost);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    if (overlay.parentNode) document.body.removeChild(overlay);
+    document.removeEventListener('keydown', onKeydown);
+  };
+  const onKeydown = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKeydown);
+  btnClose.addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  const bigCM = CodeMirror(cmHost, {
+    mode: 'lua',
+    theme: 'luanti',
+    lineNumbers: true,
+    readOnly: true,
+    matchBrackets: true,
+    value: luaCM.getValue(),
+  });
+  bigCM.setSize('100%', '100%');
+  setTimeout(() => bigCM.refresh(), 0);
+
+  btnCopy.addEventListener('click', () => {
+    navigator.clipboard.writeText(bigCM.getValue()).then(() => {
+      const original = t('lua.copy');
+      btnCopy.textContent = t('lua.copied');
+      setTimeout(() => { btnCopy.textContent = original; }, 1500);
+    });
+  });
+}
 
 // ── Texture management ────────────────────────
 function renderTextureList() {
@@ -493,8 +586,10 @@ async function applyProjectData(p) {
   updateCodePreview();
 }
 
-// ── Download mod zip ─────────────────────────
-document.getElementById('btn-download').addEventListener('click', async () => {
+// ── Mod-bestanden opbouwen (gedeeld door zip-download en "Test in Luanti") ──
+// Geeft { modName, files } terug, met files als platte map van
+// pad -> inhoud (string voor tekstbestanden, Blob voor textures/sounds).
+async function buildModFiles() {
   const modName  = (document.getElementById('mod-name').value.trim() || 'mymod')
                     .replace(/[^a-z0-9_]/gi, '_').toLowerCase();
   const modDesc  = document.getElementById('mod-desc').value.trim()   || 'My mod';
@@ -502,41 +597,39 @@ document.getElementById('btn-download').addEventListener('click', async () => {
 
   const luaCode = generateLuaCode(workspace);
 
-  const zip = new JSZip();
-  const folder = zip.folder(modName);
-
-  // mod.conf
   let conf = `name = ${modName}\ndescription = ${modDesc}\n`;
   if (modAuthor) conf += `author = ${modAuthor}\n`;
   conf += `release = 1\n`;
-  folder.file('mod.conf', conf);
 
-  // init.lua
   const header = `-- ${modName} — generated by LuantiStudio\n-- ${modDesc}\n\n`;
-  folder.file('init.lua', header + (luaCode || t('lua.empty')));
 
-  // textures/
-  if (window.luantiTextures.length > 0) {
-    const texFolder = folder.folder('textures');
-    for (const tex of window.luantiTextures) {
-      // dataUrl → blob → binary
-      const resp = await fetch(tex.dataUrl);
-      const blob = await resp.blob();
-      texFolder.file(tex.name, blob);
-    }
+  const files = {
+    'mod.conf': conf,
+    'init.lua': header + (luaCode || t('lua.empty')),
+  };
+
+  for (const tex of window.luantiTextures) {
+    const resp = await fetch(tex.dataUrl);
+    files[`textures/${tex.name}`] = await resp.blob();
+  }
+  for (const snd of window.luantiSounds) {
+    const resp = await fetch(snd.dataUrl);
+    files[`sounds/${snd.fileName}`] = await resp.blob();
   }
 
-  // sounds/
-  if (window.luantiSounds.length > 0) {
-    const soundFolder = folder.folder('sounds');
-    for (const snd of window.luantiSounds) {
-      const resp = await fetch(snd.dataUrl);
-      const blob = await resp.blob();
-      soundFolder.file(snd.fileName, blob);
-    }
+  return { modName, files };
+}
+
+// ── Download mod zip ─────────────────────────
+document.getElementById('btn-download').addEventListener('click', async () => {
+  const { modName, files } = await buildModFiles();
+
+  const zip = new JSZip();
+  const folder = zip.folder(modName);
+  for (const [path, content] of Object.entries(files)) {
+    folder.file(path, content);
   }
 
-  // Generate and trigger download
   const content = await zip.generateAsync({ type: 'blob' });
   const url = URL.createObjectURL(content);
   const a   = document.createElement('a');
@@ -547,6 +640,90 @@ document.getElementById('btn-download').addEventListener('click', async () => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 });
+
+// ── Test in Luanti: direct naar een lokale mods-map schrijven ──
+// Gebruikt de File System Access API (Chrome/Edge) om één keer om
+// toestemming voor een map te vragen en die daarna te onthouden, zodat
+// elke volgende klik de mod direct bijwerkt — geen download/uitpakken
+// meer nodig. Niet ondersteund in Firefox/Safari; de knop blijft dan
+// verborgen en "Download mod (.zip)" is het alternatief.
+const testDropdownEl = document.getElementById('test-dropdown');
+const fsAccessSupported = 'showDirectoryPicker' in window;
+if (fsAccessSupported) testDropdownEl.hidden = false;
+
+async function getModsFolderHandle() {
+  const handle = await loadSetting('modsFolderHandle');
+  if (!handle) return null;
+  try {
+    let perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') perm = await handle.requestPermission({ mode: 'readwrite' });
+    return perm === 'granted' ? handle : null;
+  } catch (e) {
+    return null; // handle niet meer geldig (bv. map verwijderd)
+  }
+}
+
+async function pickModsFolder() {
+  const handle = await window.showDirectoryPicker({ id: 'luanti-mods-folder', mode: 'readwrite' });
+  await saveSetting('modsFolderHandle', handle);
+  return handle;
+}
+
+async function writeModToFolder(modsHandle, modName, files) {
+  // Eerst de bestaande mod-map wissen zodat verwijderde bestanden (bv.
+  // een oude texture) niet blijven hangen — daarna alles vers opbouwen.
+  try {
+    await modsHandle.removeEntry(modName, { recursive: true });
+  } catch (e) { /* bestond nog niet — prima */ }
+  const modDir = await modsHandle.getDirectoryHandle(modName, { create: true });
+
+  for (const [path, content] of Object.entries(files)) {
+    const parts = path.split('/');
+    const fileName = parts.pop();
+    let dir = modDir;
+    for (const part of parts) {
+      dir = await dir.getDirectoryHandle(part, { create: true });
+    }
+    const fileHandle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
+  }
+}
+
+async function testInLuanti(forcePickFolder) {
+  try {
+    let handle = forcePickFolder ? null : await getModsFolderHandle();
+    if (!handle) handle = await pickModsFolder();
+
+    const { modName, files } = await buildModFiles();
+    await writeModToFolder(handle, modName, files);
+    showToast(t('test.done', { name: modName }));
+  } catch (e) {
+    if (e.name === 'AbortError') return; // gebruiker annuleerde de mappenkiezer
+    console.error(e);
+    showToast(t('test.error'));
+  }
+}
+
+if (fsAccessSupported) {
+  const btnTest  = document.getElementById('btn-test');
+  const menuTest = document.getElementById('test-menu');
+
+  btnTest.addEventListener('click', e => {
+    e.stopPropagation();
+    menuTest.classList.toggle('open');
+  });
+  document.addEventListener('click', () => menuTest.classList.remove('open'));
+
+  menuTest.addEventListener('click', async e => {
+    const li = e.target.closest('li[data-action]');
+    if (!li) return;
+    menuTest.classList.remove('open');
+    if (li.dataset.action === 'run') await testInLuanti(false);
+    else if (li.dataset.action === 'choose-folder') await testInLuanti(true);
+  });
+}
 
 // ── PWA: service worker registreren (offline + installeerbaar) ──
 if ('serviceWorker' in navigator) {

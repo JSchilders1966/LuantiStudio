@@ -21,8 +21,15 @@ const I18N = {
     'header.authorPlaceholder': 'jouwnaam',
     'header.examplesBtn': '📂 Voorbeelden',
     'header.projectBtn': '💾 Project',
+    'header.testBtn': '🎮 Test in Luanti',
     'header.download': '⬇ Download mod (.zip)',
     'header.langLabel': 'Taal',
+
+    'test.menuRun': 'Testen (schrijf naar mods-map)',
+    'test.menuChooseFolder': 'Andere mods-map kiezen…',
+    'test.done': 'Mod "{name}" staat klaar in je mods-map. Herstart Luanti of laad de wereld opnieuw.',
+    'test.error': 'Kon de mod niet wegschrijven. Probeer een andere map te kiezen.',
+    'test.unsupported': 'Deze browser ondersteunt geen directe bestandstoegang. Gebruik "Download mod (.zip)" en pak die uit in je mods-map.',
 
     'examples.boom': '🌳 Groeiende boom',
     'examples.geluid': '🔊 Geluidsnode',
@@ -46,6 +53,7 @@ const I18N = {
 
     'lua.copy': '📋 Kopieer',
     'lua.copied': '✓ Gekopieerd!',
+    'lua.expand': '⛶ Vergroot',
     'lua.placeholder': '-- Voeg blokken toe in de workspace om Lua-code te genereren.',
     'lua.empty': '-- (workspace is leeg)',
 
@@ -174,8 +182,15 @@ const I18N = {
     'header.authorPlaceholder': 'yourname',
     'header.examplesBtn': '📂 Examples',
     'header.projectBtn': '💾 Project',
+    'header.testBtn': '🎮 Test in Luanti',
     'header.download': '⬇ Download mod (.zip)',
     'header.langLabel': 'Language',
+
+    'test.menuRun': 'Test (write to mods folder)',
+    'test.menuChooseFolder': 'Choose a different mods folder…',
+    'test.done': 'Mod "{name}" is ready in your mods folder. Restart Luanti or reload the world.',
+    'test.error': 'Could not write the mod. Try choosing a different folder.',
+    'test.unsupported': 'This browser doesn\'t support direct file access. Use "Download mod (.zip)" and extract it into your mods folder instead.',
 
     'examples.boom': '🌳 Growing tree',
     'examples.geluid': '🔊 Sound node',
@@ -199,6 +214,7 @@ const I18N = {
 
     'lua.copy': '📋 Copy',
     'lua.copied': '✓ Copied!',
+    'lua.expand': '⛶ Expand',
     'lua.placeholder': '-- Add blocks to the workspace to generate Lua code.',
     'lua.empty': '-- (workspace is empty)',
 
@@ -316,13 +332,16 @@ const I18N = {
   },
 };
 
+// Standaardtaal is Engels — alleen een eerder door de gebruiker gekozen
+// taal (via de taalkiezer, onthouden in localStorage) overschrijft dit.
+// Geen browsertaal-detectie: "default is Engels" moet ook echt de
+// default zijn voor iedereen die nog niets gekozen heeft.
 function detectInitialLanguage() {
   try {
     const stored = localStorage.getItem(LANG_STORAGE_KEY);
     if (stored && I18N[stored]) return stored;
   } catch (e) { /* localStorage kan geblokkeerd zijn */ }
-  const browserLang = (navigator.language || 'nl').slice(0, 2).toLowerCase();
-  return I18N[browserLang] ? browserLang : 'nl';
+  return 'en';
 }
 
 let currentLang = detectInitialLanguage();

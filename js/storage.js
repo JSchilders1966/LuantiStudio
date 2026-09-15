@@ -2,12 +2,18 @@
 // LuantiStudio — projecten opslaan/openen (IndexedDB)
 // Elk project wordt bewaard onder de naam die de gebruiker opgeeft.
 // IndexedDB i.p.v. localStorage omdat geüploade textures (data-URLs)
-// al snel te groot zijn voor localStorage's ~5-10MB limiet.
+// al snel te groot zijn voor localStorage's ~5-10MB limiet. Dezelfde
+// database heeft ook een kleine "settings"-store — o.a. voor de
+// FileSystemDirectoryHandle van de gekozen Luanti mods-map ("Test in
+// Luanti"). IndexedDB kan zulke handles direct opslaan (structured
+// clone), zodat de gebruiker de map niet elke sessie opnieuw hoeft te
+// kiezen.
 // ─────────────────────────────────────────────
 
 const DB_NAME = 'luantistudio';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = 'projects';
+const SETTINGS_STORE = 'settings';
 
 function openProjectDB() {
   return new Promise((resolve, reject) => {
@@ -17,8 +23,31 @@ function openProjectDB() {
       if (!db.objectStoreNames.contains(STORE)) {
         db.createObjectStore(STORE, { keyPath: 'name' });
       }
+      if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
+        db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
+      }
     };
     req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveSetting(key, value) {
+  const db = await openProjectDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(SETTINGS_STORE, 'readwrite');
+    tx.objectStore(SETTINGS_STORE).put({ key, value });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadSetting(key) {
+  const db = await openProjectDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(SETTINGS_STORE, 'readonly');
+    const req = tx.objectStore(SETTINGS_STORE).get(key);
+    req.onsuccess = () => resolve(req.result ? req.result.value : null);
     req.onerror = () => reject(req.error);
   });
 }
