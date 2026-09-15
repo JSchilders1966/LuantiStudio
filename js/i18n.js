@@ -26,10 +26,20 @@ const I18N = {
     'header.langLabel': 'Taal',
 
     'test.menuRun': 'Testen (schrijf naar mods-map)',
+    'test.menuImport': 'Mod importeren uit map…',
     'test.menuChooseFolder': 'Andere mods-map kiezen…',
     'test.done': 'Mod "{name}" staat klaar in je mods-map. Herstart Luanti of laad de wereld opnieuw.',
     'test.error': 'Kon de mod niet wegschrijven. Probeer een andere map te kiezen.',
     'test.unsupported': 'Deze browser ondersteunt geen directe bestandstoegang. Gebruik "Download mod (.zip)" en pak die uit in je mods-map.',
+
+    'import.pickTitle': 'Kies een mod om te importeren',
+    'import.noMods': 'Geen mods gevonden in deze map.',
+    'import.confirmOverwrite': 'Huidige workspace vervangen door mod "{name}"? De Lua-code wordt geïmporteerd als één "Eigen code"-blok — LuantiStudio kan bestaande Lua niet terugvertalen naar losse blokken.',
+    'import.confirmOverwriteBlocks': 'Huidige workspace vervangen door mod "{name}"? Deze mod is eerder in LuantiStudio gemaakt, dus de originele blokken worden hersteld.',
+    'import.done': 'Mod "{name}" geïmporteerd als "Eigen code"-blok. Textures en geluiden zijn ook meegenomen.',
+    'import.doneBlocks': 'Mod "{name}" volledig geïmporteerd, inclusief de originele blokken.',
+    'import.error': 'Kon deze mod niet importeren (ontbreekt init.lua?).',
+    'import.comment': '-- Geïmporteerd vanuit mod "{name}" — bewerk hier de originele Lua-code.\n\n',
 
     'examples.boom': '🌳 Groeiende boom',
     'examples.geluid': '🔊 Geluidsnode',
@@ -187,10 +197,20 @@ const I18N = {
     'header.langLabel': 'Language',
 
     'test.menuRun': 'Test (write to mods folder)',
+    'test.menuImport': 'Import mod from folder…',
     'test.menuChooseFolder': 'Choose a different mods folder…',
     'test.done': 'Mod "{name}" is ready in your mods folder. Restart Luanti or reload the world.',
     'test.error': 'Could not write the mod. Try choosing a different folder.',
     'test.unsupported': 'This browser doesn\'t support direct file access. Use "Download mod (.zip)" and extract it into your mods folder instead.',
+
+    'import.pickTitle': 'Choose a mod to import',
+    'import.noMods': 'No mods found in this folder.',
+    'import.confirmOverwrite': 'Replace current workspace with mod "{name}"? The Lua code is imported as one "Custom code" block — LuantiStudio can\'t translate existing Lua back into separate blocks.',
+    'import.confirmOverwriteBlocks': 'Replace current workspace with mod "{name}"? This mod was previously made in LuantiStudio, so the original blocks will be restored.',
+    'import.done': 'Mod "{name}" imported as a "Custom code" block. Textures and sounds were loaded too.',
+    'import.doneBlocks': 'Mod "{name}" imported in full, including the original blocks.',
+    'import.error': 'Could not import this mod (missing init.lua?).',
+    'import.comment': '-- Imported from mod "{name}" — edit the original Lua code here.\n\n',
 
     'examples.boom': '🌳 Growing tree',
     'examples.geluid': '🔊 Sound node',

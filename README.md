@@ -18,6 +18,7 @@ Built for classroom use (De Twijn / TechDeck) — the generated Lua code always 
 - **PWA** — installable as an app, works offline thanks to a service worker
 - **One-click download** — generates a complete mod folder (`mod.conf`, `init.lua`, `textures/`, `sounds/`) as a `.zip`
 - **Test in Luanti** (Chrome/Edge) — pick your local `mods/` folder once, then write the mod straight into it with one click — no more download/unzip/overwrite by hand. Falls back to the zip download in browsers without the File System Access API (Firefox/Safari)
+- **Import an existing mod** (Chrome/Edge) — pick a mod from your local `mods/` folder to bring its `mod.conf` info, textures, and sounds into LuantiStudio. Every export (zip or Test in Luanti) also drops a `luantistudio.json` companion file into the mod folder with the full Blockly workspace state; if it's found on import, the *original blocks* are restored exactly, not just the generated Lua. Mods without that file (hand-written or from elsewhere) fall back to loading their `init.lua` into one "Custom code" block instead — there's no general Lua-to-blocks parser, so that's the honest fallback
 
 ## Getting started
 
